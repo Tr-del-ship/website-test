@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f8f6">
+  <meta name="description" content="Manage customer support tickets, conversations, and response-time analytics in Queue.">
+  <title>Staff inbox · Queue Support</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;650;700;750;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f8f8f6;
+      --surface: #fff;
+      --surface-soft: #f3f4f1;
+      --ink: #202923;
+      --muted: #848c85;
+      --line: #ebede9;
+      --green: #148361;
+      --green-soft: #e9f5ef;
+      --orange: #c16a40;
+      --orange-soft: #fbf0e9;
+      --blue: #497ca1;
+      --blue-soft: #eaf2f7;
+      --shadow: 0 8px 28px rgba(35, 45, 38, .055);
+      font-family: 'DM Sans', sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--paper); color: var(--ink); font-size: 13px; }
+    button, input, textarea, select { font: inherit; }
+    button { color: inherit; }
+    :focus-visible { outline: 3px solid rgba(20, 131, 97, .35); outline-offset: 2px; }
+    .app { display: grid; grid-template-columns: 66px 242px minmax(270px, 335px) minmax(350px, 1fr) 248px; min-height: 100vh; max-width: 1920px; margin: 0 auto; }
+    .rail { position: sticky; top: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; height: 100vh; padding: 17px 0; border-right: 1px solid var(--line); background: #f2f3f0; }
+    .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: 21px; border-radius: 12px; color: white; background: var(--green); }
+    .rail-button { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 12px; color: #808a82; background: transparent; cursor: pointer; transition: .16s ease; }
+    .rail-button:hover, .rail-button.active { color: var(--green); background: #e4eee7; }
+    .rail-button.active::before { position: absolute; left: -13px; width: 3px; height: 21px; border-radius: 0 3px 3px 0; background: var(--green); content: ''; }
+    .rail-spacer { flex: 1; }
+    .workspace { display: flex; flex-direction: column; min-height: 100vh; padding: 20px 15px 16px; border-right: 1px solid var(--line); background: #fbfbfa; }
+    .workspace-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; padding: 0 5px; }
+    .workspace-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .server-avatar { display: grid; flex: 0 0 auto; place-items: center; width: 35px; height: 35px; border-radius: 11px; color: #795b3f; background: #eee4d7; font-family: Manrope, sans-serif; font-size: 11px; font-weight: 800; }
+    .workspace-name { overflow: hidden; font-family: Manrope, sans-serif; font-size: 12px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+    .workspace-subtitle { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .section-label { margin: 22px 7px 9px; color: #939b94; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .nav-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: 36px; padding: 0 9px; border: 0; border-radius: 8px; color: #667068; background: transparent; text-align: left; cursor: pointer; }
+    .nav-item:hover { background: var(--surface-soft); }
+    .nav-item.selected { color: var(--green); background: #edf4ef; font-weight: 700; }
+    .nav-label { display: flex; align-items: center; gap: 9px; }
+    .nav-count { color: #939b94; font-size: 11px; }
+    .nav-item.selected .nav-count { color: var(--green); }
+    .channel-chip { color: #869089; font-size: 11px; }
+    .team-list { display: grid; gap: 4px; padding: 0 6px; }
+    .team-row { display: flex; align-items: center; gap: 9px; min-height: 31px; color: #667068; font-size: 12px; }
+    .avatar { position: relative; display: grid; flex: 0 0 auto; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #46534a; background: #e9ebe3; font-family: Manrope, sans-serif; font-size: 10px; font-weight: 800; }
+    .avatar.green { color: #27694f; background: #dcebe0; }
+    .avatar.peach { color: #9b6243; background: #f3e5d9; }
+    .avatar.blue { color: #456b85; background: #dfeaf0; }
+    .avatar.pink { color: #895f72; background: #f2e4e9; }
+    .online-dot { position: absolute; right: -1px; bottom: 0; width: 8px; height: 8px; border: 1.5px solid white; border-radius: 50%; background: #4db77a; }
+    .my-profile { display: flex; align-items: center; gap: 9px; margin-top: auto; padding: 11px 5px 1px; border-top: 1px solid var(--line); }
+    .my-profile-info { flex: 1; min-width: 0; }
+    .profile-name { font-size: 11px; font-weight: 700; }
+    .profile-status { margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .inbox { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; border-right: 1px solid var(--line); background: #fff; }
+    .inbox-header { padding: 23px 17px 16px; border-bottom: 1px solid var(--line); }
+    .eyebrow { color: var(--green); font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    .inbox-title { margin: 6px 0 16px; font-family: Manrope, sans-serif; font-size: 20px; font-weight: 750; letter-spacing: 0; }
+    .search-wrap { position: relative; }
+    .search-wrap svg { position: absolute; top: 10px; left: 10px; color: #9aa19a; }
+    .search-input { width: 100%; height: 35px; padding: 0 30px; border: 1px solid var(--line); border-radius: 8px; outline: none; color: var(--ink); background: #fbfbfa; font-size: 11px; }
+    .search-input:focus, .reply-input:focus { border-color: #82ae98; box-shadow: 0 0 0 3px rgba(20, 131, 97, .08); }
+    .shortcut { position: absolute; top: 9px; right: 9px; color: #a3aaa3; font-size: 10px; }
+    .filters { display: flex; gap: 5px; margin-top: 13px; }
+    .filter-button { padding: 5px 9px; border: 0; border-radius: 6px; color: #727b74; background: transparent; font-size: 10px; cursor: pointer; }
+    .filter-button:hover { background: var(--surface-soft); }
+    .filter-button.active { color: var(--green); background: var(--green-soft); font-weight: 700; }
+    .ticket-list { flex: 1; overflow-y: auto; }
+    .ticket-item { display: flex; gap: 10px; width: 100%; padding: 14px 15px; border: 0; border-bottom: 1px solid #f0f1ee; background: white; text-align: left; cursor: pointer; transition: background .14s ease; }
+    .ticket-item:hover { background: #fafbf9; }
+    .ticket-item.active { background: #f1f7f2; box-shadow: inset 3px 0 var(--green); }
+    .ticket-item .avatar { width: 31px; height: 31px; }
+    .ticket-copy { flex: 1; min-width: 0; }
+    .ticket-topline { display: flex; justify-content: space-between; gap: 6px; align-items: center; }
+    .ticket-person { overflow: hidden; font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .ticket-time { flex: 0 0 auto; color: #9aa19a; font-size: 9px; }
+    .ticket-subject { overflow: hidden; margin-top: 5px; color: #39443c; font-size: 11px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    .ticket-preview { overflow: hidden; margin-top: 4px; color: #929a93; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .ticket-meta { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+    .tag { display: inline-flex; align-items: center; gap: 4px; width: fit-content; padding: 3px 6px; border-radius: 4px; color: #58705e; background: #edf2ec; font-size: 9px; font-weight: 600; }
+    .tag.billing { color: #a06c45; background: #f8efe7; }
+    .tag.bug { color: #577693; background: #edf2f6; }
+    .tag.closed { color: #777e77; background: #f0f0ee; }
+    .unread-dot { width: 6px; height: 6px; border-radius: 50%; background: #e18a5f; }
+    .conversation { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; background: #fff; }
+    .conversation-header { display: flex; justify-content: space-between; align-items: center; min-height: 70px; padding: 12px 21px; border-bottom: 1px solid var(--line); }
+    .conversation-title { margin: 0; font-family: Manrope, sans-serif; font-size: 14px; font-weight: 750; }
+    .conversation-subtitle { margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .header-actions { display: flex; align-items: center; gap: 7px; }
+    .details-toggle { display: none; align-items: center; min-height: 33px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; color: #68746b; background: white; font-size: 10px; font-weight: 600; cursor: pointer; }
+    .icon-button { display: grid; place-items: center; width: 33px; height: 33px; border: 1px solid var(--line); border-radius: 8px; color: #758077; background: #fff; cursor: pointer; transition: .14s ease; }
+    .icon-button:hover { color: var(--green); border-color: #d1dfd5; background: #f5f8f5; }
+    .resolve-button { display: flex; align-items: center; gap: 6px; height: 33px; padding: 0 11px; border: 0; border-radius: 7px; color: white; background: var(--green); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .resolve-button:hover { background: #116f53; }
+    .resolve-button.is-closed { color: #637267; background: #e9efe9; }
+    .message-stream { display: flex; flex: 1; flex-direction: column; gap: 19px; overflow: auto; padding: 21px 24px 28px; }
+    .date-divider { display: flex; align-items: center; gap: 10px; color: #a0a7a0; font-size: 9px; }
+    .date-divider::before, .date-divider::after { flex: 1; height: 1px; background: var(--line); content: ''; }
+    .message { display: flex; align-items: flex-start; gap: 9px; max-width: 93%; animation: rise .2s ease both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .message-body { min-width: 0; }
+    .message-heading { display: flex; align-items: baseline; gap: 7px; margin: 1px 0 5px; }
+    .message-name { font-size: 10px; font-weight: 700; }
+    .message-time { color: #a0a7a0; font-size: 9px; }
+    .message-text { padding: 10px 12px; border: 1px solid #efefec; border-radius: 2px 10px 10px; color: #4c574f; background: #f7f8f5; font-size: 11px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .message.staff { align-self: flex-end; flex-direction: row-reverse; }
+    .message.staff .message-body { display: flex; flex-direction: column; align-items: flex-end; }
+    .message.staff .message-text { border-color: #e1eee5; border-radius: 10px 2px 10px 10px; background: #edf5ef; }
+    .message.staff .message-heading { flex-direction: row-reverse; }
+    .internal-note { align-self: center; width: min(100%, 390px); padding: 10px 12px; border: 1px dashed #dfc7aa; border-radius: 7px; color: #876944; background: #fcf7ef; font-size: 10px; line-height: 1.6; }
+    .internal-note strong { display: block; margin-bottom: 3px; font-size: 9px; text-transform: uppercase; }
+    .reply-area { padding: 12px 20px 17px; border-top: 1px solid var(--line); }
+    .reply-mode { display: flex; align-items: center; gap: 12px; margin-bottom: 9px; }
+    .mode-button { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; color: #8a928b; background: transparent; font-size: 10px; cursor: pointer; }
+    .mode-button.active { color: var(--green); font-weight: 700; }
+    .reply-box { position: relative; }
+    .reply-input { display: block; width: 100%; min-height: 80px; resize: vertical; padding: 11px 12px 38px; border: 1px solid var(--line); border-radius: 8px; outline: none; color: var(--ink); background: #fdfdfc; font-size: 11px; line-height: 1.6; }
+    .reply-input::placeholder { color: #a4aaa4; }
+    .reply-tools { position: absolute; right: 8px; bottom: 8px; left: 9px; display: flex; justify-content: space-between; align-items: center; }
+    .reply-hint { color: #a0a7a0; font-size: 9px; }
+    .send-button { display: flex; align-items: center; gap: 5px; padding: 6px 10px; border: 0; border-radius: 6px; color: white; background: var(--green); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .send-button:hover { background: #116f53; }
+    .details { min-height: 100vh; border-left: 1px solid var(--line); background: #fbfbfa; }
+    .details-header { display: flex; align-items: center; justify-content: space-between; min-height: 70px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+    .details-heading { font-family: Manrope, sans-serif; font-size: 12px; font-weight: 750; }
+    .details-section { padding: 16px; border-bottom: 1px solid var(--line); }
+    .customer-card { display: flex; align-items: center; gap: 10px; }
+    .customer-card .avatar { width: 37px; height: 37px; }
+    .customer-name { font-size: 12px; font-weight: 700; }
+    .customer-handle { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .customer-actions { display: flex; gap: 7px; margin-top: 14px; }
+    .small-action { display: flex; justify-content: center; align-items: center; gap: 5px; flex: 1; min-height: 30px; border: 1px solid var(--line); border-radius: 6px; color: #6e786f; background: white; font-size: 9px; cursor: pointer; }
+    a.small-action { text-decoration: none; }
+    .small-action:hover { border-color: #cddbd0; color: var(--green); }
+    .detail-label { display: block; margin-bottom: 8px; color: #879088; font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .detail-select { width: 100%; height: 34px; padding: 0 9px; border: 1px solid var(--line); border-radius: 6px; outline: none; color: #475149; background: white; font-size: 10px; }
+    .label-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .label-add { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border: 1px dashed #d9ddd8; border-radius: 4px; color: #858d86; background: transparent; font-size: 9px; cursor: pointer; }
+    .metadata-row { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; color: #909890; font-size: 9px; }
+    .metadata-row strong { color: #505b52; font-weight: 600; text-align: right; }
+    .activity-heading { margin-bottom: 13px; color: #879088; font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .activity-item { position: relative; display: flex; gap: 8px; padding-bottom: 13px; color: #748076; font-size: 9px; line-height: 1.5; }
+    .activity-item:not(:last-child)::before { position: absolute; top: 15px; bottom: 0; left: 5px; width: 1px; background: #e6e9e5; content: ''; }
+    .activity-dot { z-index: 1; flex: 0 0 auto; width: 11px; height: 11px; margin-top: 2px; border: 2px solid white; border-radius: 50%; background: #91b6a0; box-shadow: 0 0 0 1px #dce7de; }
+    .activity-time { display: block; margin-top: 2px; color: #a2a8a2; font-size: 8px; }
+    .empty-state { display: grid; min-height: 240px; place-items: center; padding: 30px; color: #9ba39c; text-align: center; }
+    .empty-state svg { margin-bottom: 9px; color: #9cae9f; }
+    .empty-state strong { display: block; margin-bottom: 5px; color: #505b52; font-size: 12px; }
+    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 10; padding: 11px 16px; border: 1px solid #deebe1; border-radius: 8px; color: #275b40; background: white; box-shadow: var(--shadow); font-size: 11px; animation: rise .18s ease both; }
+    .page-view { display: none; grid-column: 3 / -1; min-width: 0; min-height: 100vh; overflow-y: auto; padding: clamp(22px, 4vw, 48px); background: var(--paper); }
+    .app:not([data-page="tickets"]) .inbox, .app:not([data-page="tickets"]) .conversation, .app:not([data-page="tickets"]) .details { display: none; }
+    .app:not([data-page="tickets"]) .page-view { display: block; }
+    .page-heading { margin-bottom: 24px; }
+    .page-heading.analytics-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+    .page-heading h1 { margin: 7px 0 6px; font-family: Manrope, sans-serif; font-size: clamp(23px, 3vw, 31px); letter-spacing: -.03em; }
+    .page-heading p { max-width: 650px; margin: 0; color: #7e887f; font-size: 12px; line-height: 1.7; }
+    .analytics-range { display: grid; gap: 6px; flex: 0 0 auto; color: #7e887f; font-size: 10px; font-weight: 700; }
+    .analytics-range select { min-width: 142px; height: 36px; padding: 0 10px; border: 1px solid #dfe5df; border-radius: 7px; color: #475149; background: #fff; font-size: 11px; }
+    .page-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+    .page-card { min-width: 0; padding: 19px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); box-shadow: var(--shadow); }
+    .metric-label { color: #828c83; font-size: 10px; font-weight: 600; }
+    .metric-value { margin-top: 8px; font-family: Manrope, sans-serif; font-size: 29px; font-weight: 750; letter-spacing: -.04em; }
+    .metric-caption { margin-top: 4px; color: #929a93; font-size: 10px; }
+    .page-card h2 { margin: 0 0 15px; font-family: Manrope, sans-serif; font-size: 13px; }
+    .page-card.wide { grid-column: span 2; }
+    .page-card.full { grid-column: 1 / -1; }
+    .chart-row { display: grid; grid-template-columns: 82px minmax(30px, 1fr) 25px; align-items: center; gap: 10px; margin: 13px 0; color: #677168; font-size: 10px; }
+    .chart-track { height: 8px; overflow: hidden; border-radius: 99px; background: #eef0ec; }
+    .chart-bar { height: 100%; min-width: 2px; border-radius: inherit; background: #68a787; }
+    .chart-value { color: #858e86; text-align: right; }
+    .response-card { padding: 22px; }
+    .response-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; margin-bottom: 12px; }
+    .response-card-header h2 { margin: 0 0 5px; font-size: 15px; }
+    .response-card-header p { margin: 0; color: #89938a; font-size: 10px; line-height: 1.6; }
+    .response-count { flex: 0 0 auto; padding: 6px 9px; border-radius: 20px; color: #52715b; background: #edf4ef; font-size: 10px; font-weight: 700; }
+    .response-chart { display: block; width: 100%; height: auto; overflow: visible; }
+    .response-chart-grid { stroke: #edf0ec; stroke-width: 1; }
+    .response-chart-axis { fill: #88928a; font: 10px 'DM Sans', sans-serif; }
+    .response-chart-line { fill: none; stroke: #25815e; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
+    .response-chart-point { fill: #fff; stroke: #25815e; stroke-width: 2.5; }
+    .response-chart-empty { display: grid; min-height: 200px; place-items: center; padding: 24px; border: 1px dashed #dce5dd; border-radius: 9px; color: #77837a; background: #fafbf9; font-size: 11px; text-align: center; }
+    .response-records { margin-top: 13px; border-top: 1px solid #eff1ee; }
+    .response-records table { width: 100%; border-collapse: collapse; text-align: left; }
+    .response-records th { padding: 11px 8px 8px; color: #939b94; font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .response-records td { padding: 9px 8px; border-top: 1px solid #f2f3f1; color: #566158; font-size: 10px; }
+    .response-records td:last-child { color: #315d43; font-weight: 700; text-align: right; }
+    .response-records .response-id { color: #929a93; }
+    .response-no-records { padding: 13px 8px; color: #89938a; font-size: 10px; }
+    .community-list { display: grid; gap: 9px; }
+    .community-item { display: flex; width: 100%; align-items: flex-start; gap: 11px; padding: 13px; border: 1px solid var(--line); border-radius: 9px; background: white; text-align: left; cursor: pointer; }
+    .community-item:hover { border-color: #c8dbce; background: #fbfdfb; }
+    .community-item-copy { flex: 1; min-width: 0; }
+    .community-item-title { display: flex; justify-content: space-between; gap: 10px; color: #344038; font-size: 11px; font-weight: 700; }
+    .community-item-preview { display: block; margin-top: 5px; overflow: hidden; color: #818b82; font-size: 10px; font-weight: 400; line-height: 1.6; text-overflow: ellipsis; }
+    .community-item-meta { display: flex; gap: 6px; margin-top: 8px; }
+    .settings-form { max-width: 650px; }
+    .settings-group { margin-bottom: 13px; padding: 18px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+    .settings-group h2 { margin: 0 0 5px; font-family: Manrope, sans-serif; font-size: 13px; }
+    .settings-group p { margin: 0 0 14px; color: #8b948c; font-size: 10px; line-height: 1.6; }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; gap: 18px; min-height: 40px; color: #49544b; font-size: 11px; }
+    .settings-row + .settings-row { margin-top: 8px; padding-top: 10px; border-top: 1px solid #f0f1ee; }
+    .settings-control { min-width: 135px; height: 34px; padding: 0 9px; border: 1px solid var(--line); border-radius: 6px; color: #475149; background: white; font-size: 10px; }
+    .settings-checkbox { width: 16px; height: 16px; accent-color: var(--green); }
+    .primary-button { min-height: 36px; padding: 0 13px; border: 0; border-radius: 7px; color: white; background: var(--green); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .primary-button:hover { background: #116f53; }
+    .app.compact-tickets .ticket-item { padding-top: 9px; padding-bottom: 9px; }
+    .app.compact-tickets .ticket-meta { margin-top: 5px; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+    @media (max-width: 1220px) {
+      .app { grid-template-columns: 58px 202px minmax(250px, 305px) minmax(330px, 1fr); }
+      .details-toggle { display: inline-flex; }
+      .details { position: fixed; top: 0; right: 0; bottom: 0; z-index: 6; display: none; width: min(300px, 88vw); min-height: 100dvh; overflow-y: auto; border-left: 1px solid var(--line); box-shadow: -12px 0 36px rgba(35, 45, 38, .12); }
+      .app.show-details .details { display: block; }
+    }
+    @media (max-width: 780px) {
+      .app { grid-template-columns: 54px minmax(0, 1fr); }
+      .page-view { grid-column: 2; min-height: calc(100vh - 62px); padding: 22px 15px; }
+      .page-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .page-card.wide { grid-column: 1 / -1; }
+      .page-card.full { grid-column: 1 / -1; }
+      .rail { grid-row: 1; grid-column: 1; }
+      .workspace { grid-row: 1; grid-column: 2; min-height: auto; height: auto; padding: 13px 14px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .workspace-top { margin: 0; }
+      .workspace > .section-label, .workspace > .nav-item, .workspace > .team-list, .workspace > .my-profile { display: none; }
+      .inbox { grid-row: 2; grid-column: 1 / -1; min-height: auto; border-right: 0; }
+      .inbox-header { padding: 16px; }
+      .inbox-title { font-size: 17px; }
+      .ticket-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ticket-item { min-height: 90px; padding: 12px; }
+      .conversation { display: none; }
+      .app.show-conversation .workspace, .app.show-conversation .inbox { display: none; }
+      .app.show-conversation .conversation { display: flex; grid-row: 1; grid-column: 2; min-height: 100dvh; }
+      .app.show-conversation .rail { grid-row: 1; height: 100dvh; }
+      .conversation-header { min-height: 62px; padding: 10px 12px; }
+      .message-stream { padding: 17px 12px; }
+      .reply-area { padding: 11px 12px 14px; }
+    }
+    @media (max-width: 460px) {
+      .page-grid { grid-template-columns: 1fr; }
+      .page-card.wide { grid-column: auto; }
+      .page-card.full { grid-column: auto; }
+      .page-heading.analytics-heading { align-items: stretch; flex-direction: column; gap: 14px; }
+      .analytics-range, .analytics-range select { width: 100%; }
+      .response-card { padding: 15px; }
+      .response-card-header { flex-direction: column; }
+      .response-records th, .response-records td { padding-right: 4px; padding-left: 4px; font-size: 9px; }
+      .settings-row { align-items: flex-start; flex-direction: column; gap: 7px; }
+      .ticket-list { grid-template-columns: 1fr; }
+      .ticket-item { min-height: 77px; }
+      .header-actions { gap: 4px; }
+      .resolve-button { padding: 0 8px; font-size: 9px; }
+      .icon-button { width: 30px; height: 30px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="app" id="app" data-page="tickets">
+    <nav class="rail" aria-label="Primary navigation">
+      <div class="brand-mark" aria-label="Queue"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7h14M5 12h9M5 17h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg></div>
+      <button class="rail-button active" data-page="tickets" title="Tickets" aria-label="Tickets"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5V9a3 3 0 0 0 0 6v2.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5V15a3 3 0 0 0 0-6V6.5Z" stroke="currentColor" stroke-width="1.7"/><path d="M14 8v2m0 4v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+      <button class="rail-button" data-page="community" title="Community" aria-label="Community"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 19v-1.5A4.5 4.5 0 0 1 8 13h2a4.5 4.5 0 0 1 4.5 4.5V19H3.5Zm13-9a3 3 0 1 0 0-6m1 9a4.5 4.5 0 0 1 3 4.27V19h-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+      <button class="rail-button" data-page="analytics" title="Analytics" aria-label="Analytics"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 5-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="rail-spacer"></div>
+      <button class="rail-button" id="notification-button" title="Notifications" aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="rail-button" data-page="settings" title="Settings" aria-label="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.6.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.6-.9l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.9l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.6-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.6.9l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+    </nav>
+
+    <aside class="workspace" aria-label="Workspace navigation">
+      <div class="workspace-top"><div class="workspace-identity"><div class="server-avatar">OF</div><div><div class="workspace-name">Orbit & Finch</div><div class="workspace-subtitle">Community support</div></div></div><button class="icon-button" data-toast="Workspace menu" aria-label="Workspace menu"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m8 10 4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      <div class="section-label">Workspace</div>
+      <button class="nav-item selected" data-view="all"><span class="nav-label"><span>⌑</span> All tickets</span><span class="nav-count" id="all-count">0</span></button>
+      <button class="nav-item" data-view="open"><span class="nav-label"><span>◷</span> Open</span><span class="nav-count" id="open-count">0</span></button>
+      <button class="nav-item" data-view="mine"><span class="nav-label"><span>♙</span> Assigned to me</span><span class="nav-count" id="mine-count">0</span></button>
+      <button class="nav-item" data-view="closed"><span class="nav-label"><span>✓</span> Closed</span><span class="nav-count" id="closed-count">0</span></button>
+      <div class="section-label">Channels</div>
+      <button class="nav-item" data-channel="General"><span class="nav-label"><span class="channel-chip">#</span> general</span><span class="nav-count" id="general-count">0</span></button>
+      <button class="nav-item" data-channel="Billing"><span class="nav-label"><span class="channel-chip">#</span> billing</span><span class="nav-count" id="billing-count">0</span></button>
+      <button class="nav-item" data-channel="Technical"><span class="nav-label"><span class="channel-chip">#</span> technical</span><span class="nav-count" id="technical-count">0</span></button>
+      <button class="nav-item" data-channel="Other"><span class="nav-label"><span class="channel-chip">#</span> other</span><span class="nav-count" id="other-count">0</span></button>
+      <div class="section-label">On your team <span style="float:right;font-weight:400;letter-spacing:0">4 online</span></div>
+      <div class="team-list"><div class="team-row"><span class="avatar green">AM<span class="online-dot"></span></span> Avery Morgan <span style="margin-left:auto;color:#a0a7a0;font-size:10px">you</span></div><div class="team-row"><span class="avatar peach">JK<span class="online-dot"></span></span> Jordan Kim</div><div class="team-row"><span class="avatar blue">RL<span class="online-dot"></span></span> Riley Lee</div><div class="team-row"><span class="avatar pink">SC<span class="online-dot"></span></span> Sam Chen</div></div>
+      <div class="my-profile"><span class="avatar green">AM<span class="online-dot"></span></span><div class="my-profile-info"><div class="profile-name">Avery Morgan</div><div class="profile-status">Support lead</div></div><button class="rail-button" data-toast="Your profile" aria-label="Your profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/><circle cx="5" cy="12" r="1" fill="currentColor"/></svg></button></div>
+    </aside>
+
+    <section class="inbox" aria-label="Ticket inbox">
+      <header class="inbox-header"><div class="eyebrow" id="inbox-date"></div><h1 class="inbox-title">Your inbox <span id="inbox-total" style="color:#a1a8a1;font-size:14px;font-weight:500">0</span></h1><label class="search-wrap"><span class="visually-hidden">Search tickets</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input class="search-input" id="search-input" type="search" placeholder="Search tickets..."><span class="shortcut">/</span></label><div class="filters" role="group" aria-label="Filter tickets"><button class="filter-button active" data-filter="all">All</button><button class="filter-button" data-filter="open">Open</button><button class="filter-button" data-filter="mine">Mine</button></div></header>
+      <div class="ticket-list" id="ticket-list" aria-live="polite"></div>
+    </section>
+
+    <section class="conversation" aria-label="Ticket conversation"><header class="conversation-header" id="conversation-header"></header><div class="message-stream" id="message-stream" aria-live="polite"></div><form class="reply-area" id="reply-form">    <div class="reply-mode"><button class="mode-button active" id="reply-mode" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Reply</button><button class="mode-button" id="note-mode" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 2 21h20L12 3Zm0 7v4m0 3h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Internal note</button></div><div class="reply-box"><label class="visually-hidden" for="reply-input">Write a reply</label><textarea class="reply-input" id="reply-input" placeholder="Write a reply... (⌘ ↵ to send)" required></textarea><div class="reply-tools"><span class="reply-hint">Replies are saved here; email delivery is not configured.</span><button class="send-button" type="submit">Save reply <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div></form></section>
+
+    <aside class="details" aria-label="Ticket and customer details"><header class="details-header"><span class="details-heading">Details</span><button class="icon-button" id="close-details" title="Close ticket details" aria-label="Close ticket details"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></header><section class="details-section" id="customer-details"></section><section class="details-section"><label class="detail-label" for="assignee">Assignee</label><select class="detail-select" id="assignee"><option>Avery Morgan</option><option>Jordan Kim</option><option>Riley Lee</option><option>Sam Chen</option><option>Unassigned</option></select></section><section class="details-section"><span class="detail-label">Labels</span><div class="label-list" id="label-list"></div><div style="margin-top:11px"><button class="label-add" id="add-label">+ Add label</button></div></section><section class="details-section" id="ticket-metadata"></section><section class="details-section"><div class="activity-heading">Recent activity</div><div id="activity-list"></div></section></aside>
+    <section class="page-view" id="page-view" aria-live="polite"></section>
+  </main>
+  <div id="toast-region" aria-live="polite" aria-atomic="true"></div>
+  <script>
+    const seedTickets = [
+      { id: 'TK-2841', name: 'Maya Chen', handle: '@mayacreates', initials: 'MC', avatar: 'peach', subject: 'Order arrived damaged', preview: 'One of the ceramic mugs has a crack right through the side...', category: 'Billing', status: 'open', assignee: 'Avery Morgan', channel: 'billing-help', unread: true, time: '2m', created: 'Today, 10:42 AM', messages: [{ who: 'Maya Chen', initials: 'MC', avatar: 'peach', time: '10:42 AM', text: 'Hi there! My order (#OF-90312) just arrived, but unfortunately one of the ceramic mugs has a crack right through the side. The box looked fine, so I think it happened before shipping. What can we do about a replacement?' }, { who: 'Avery Morgan', initials: 'AM', avatar: 'green', time: '10:48 AM', staff: true, text: 'Oh no, I’m sorry that happened, Maya. We can absolutely send a replacement. Could you share a photo of the damage so I can get that arranged for you?' }, { who: 'Maya Chen', initials: 'MC', avatar: 'peach', time: '10:51 AM', text: 'Just attached a photo! Thank you for making this easy.' }], activity: ['Ticket created by Maya Chen', 'Assigned to Avery Morgan'] },
+      { id: 'TK-2840', name: 'Elliot Brooks', handle: '@elliotbuilds', initials: 'EB', avatar: 'blue', subject: 'Can’t access my account', preview: 'Reset link keeps taking me back to the sign-in page...', category: 'Technical', status: 'open', assignee: 'Jordan Kim', channel: 'technical', unread: true, time: '18m', created: 'Today, 10:26 AM', messages: [{ who: 'Elliot Brooks', initials: 'EB', avatar: 'blue', time: '10:26 AM', text: 'I’ve been trying to reset my password all morning. Every time I click the reset link, it takes me right back to the sign-in page. Tried Chrome and Safari with the same result.' }, { who: 'Jordan Kim', initials: 'JK', avatar: 'peach', time: '10:33 AM', staff: true, text: 'Thanks for flagging this, Elliot. I’m looking into it now. In the meantime, could you let me know roughly when you requested the reset email?' }], activity: ['Ticket created by Elliot Brooks', 'Assigned to Jordan Kim'] },
+      { id: 'TK-2839', name: 'Priya Shah', handle: '@priyamakes', initials: 'PS', avatar: 'pink', subject: 'Question about the studio plan', preview: 'Does the monthly plan include the shared pattern library?', category: 'General', status: 'open', assignee: 'Avery Morgan', channel: 'general', unread: false, time: '1h', created: 'Today, 9:14 AM', messages: [{ who: 'Priya Shah', initials: 'PS', avatar: 'pink', time: '9:14 AM', text: 'Hey! I’m thinking of upgrading to the Studio plan and wondered if it includes access to the shared pattern library, or if that’s an add-on. Thanks!' }, { who: 'Avery Morgan', initials: 'AM', avatar: 'green', time: '9:22 AM', staff: true, text: 'Hi Priya! Great question. The shared pattern library is included with every Studio plan, monthly or annual. You’ll also get the team workspace and unlimited project boards.' }], activity: ['Ticket created by Priya Shah', 'Assigned to Avery Morgan'] },
+      { id: 'TK-2838', name: 'Noah Williams', handle: '@noahdraws', initials: 'NW', avatar: 'green', subject: 'Feature request: color palettes', preview: 'Would love a way to save and share custom color sets...', category: 'General', status: 'open', assignee: 'Riley Lee', channel: 'general', unread: false, time: '2h', created: 'Today, 8:03 AM', messages: [{ who: 'Noah Williams', initials: 'NW', avatar: 'green', time: '8:03 AM', text: 'I’d love a way to save custom color palettes and share them with my team. Right now we keep passing hex codes around in chat. It’d make collaboration so much easier!' }, { who: 'Riley Lee', initials: 'RL', avatar: 'blue', time: '8:20 AM', staff: true, text: 'I hear you. We’ve heard this from a few teams, and I’ve added your vote to the feature request. I’ll make sure our product team sees the details.' }], activity: ['Ticket created by Noah Williams', 'Added to product feedback'] },
+      { id: 'TK-2837', name: 'Sofia Martinez', handle: '@sofiam', initials: 'SM', avatar: 'peach', subject: 'Double charged for September', preview: 'I see two charges on my statement for the same invoice...', category: 'Billing', status: 'open', assignee: 'Sam Chen', channel: 'billing-help', unread: true, time: '3h', created: 'Today, 7:31 AM', messages: [{ who: 'Sofia Martinez', initials: 'SM', avatar: 'peach', time: '7:31 AM', text: 'Hi, I just checked my bank statement and I’m seeing two identical charges for my September invoice. Could you help me figure out what happened?' }], activity: ['Ticket created by Sofia Martinez'] },
+      { id: 'TK-2836', name: 'Luca Moretti', handle: '@lucam', initials: 'LM', avatar: 'blue', subject: 'Thanks for the quick fix!', preview: 'Everything is working perfectly now. Really appreciate it.', category: 'Technical', status: 'closed', assignee: 'Avery Morgan', channel: 'technical', unread: false, time: '5h', created: 'Today, 5:12 AM', messages: [{ who: 'Luca Moretti', initials: 'LM', avatar: 'blue', time: '5:12 AM', text: 'Everything is working perfectly now. Really appreciate you fixing the export issue so quickly!' }, { who: 'Avery Morgan', initials: 'AM', avatar: 'green', time: '5:19 AM', staff: true, text: 'So glad that did the trick, Luca! Thanks for your patience, and happy creating.' }], activity: ['Ticket created by Luca Moretti', 'Resolved by Avery Morgan'] },
+      { id: 'TK-2835', name: 'Amara Okafor', handle: '@amaraok', initials: 'AO', avatar: 'pink', subject: 'Update my billing email', preview: 'I need to switch invoices over to our new finance address.', category: 'Billing', status: 'closed', assignee: 'Jordan Kim', channel: 'billing-help', unread: false, time: 'Yesterday', created: 'Yesterday, 4:35 PM', messages: [{ who: 'Amara Okafor', initials: 'AO', avatar: 'pink', time: '4:35 PM', text: 'Our finance team has a new email address. Could you update invoices to go to finance@studio.co going forward?' }, { who: 'Jordan Kim', initials: 'JK', avatar: 'peach', time: '4:39 PM', staff: true, text: 'All set! I’ve updated your billing contact email. Your next invoice will go to the new address.' }], activity: ['Ticket created by Amara Okafor', 'Resolved by Jordan Kim'] }
+    ];
+    let tickets = [];
+    let selectedId = tickets[0]?.id || null;
+    let activeFilter = 'all';
+    let selectedChannel = null;
+    let replyAsNote = false;
+    let toastTimer;
+    let refreshTimer;
+    let currentPage = 'tickets';
+    let analyticsRangeDays = 7;
+    const $ = (selector) => document.querySelector(selector);
+    const app = $('#app');
+    const pageView = $('#page-view');
+    const esc = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    const currentTicket = () => tickets.find((ticket) => ticket.id === selectedId);
+    const settings = { refreshSeconds: 15, compactTickets: false };
+    try {
+      const savedSettings = JSON.parse(localStorage.getItem('queue-support-settings') || '{}');
+      if ([15, 30, 60].includes(savedSettings.refreshSeconds)) settings.refreshSeconds = savedSettings.refreshSeconds;
+      if (typeof savedSettings.compactTickets === 'boolean') settings.compactTickets = savedSettings.compactTickets;
+    } catch (error) {
+      console.error('Could not load saved support inbox settings:', error);
+    }
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', ...options.headers }
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `Request failed (${response.status}).`);
+      return result;
+    }
+    async function updateTicket(ticket, changes) {
+      const updated = await api(`/api/admin/tickets/${encodeURIComponent(ticket.id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(changes)
+      });
+      const index = tickets.findIndex((item) => item.id === updated.id);
+      if (index !== -1) tickets[index] = updated;
+      render();
+      return updated;
+    }
+    function reportError(error) {
+      console.error('Could not update the support inbox:', error);
+      showToast(error.message || 'The request could not be completed.');
+    }
+    const initialsAvatar = (initials, color) => `<span class="avatar ${esc(color)}">${esc(initials)}</span>`;
+    const categoryClass = (category) => category === 'Billing' ? 'billing' : category === 'Technical' ? 'bug' : '';
+    const relativeTime = (ticket) => {
+      const age = Math.max(0, Date.now() - Date.parse(ticket.createdAt));
+      if (!Number.isFinite(age) || age < 60_000) return 'now';
+      if (age < 3_600_000) return `${Math.floor(age / 60_000)}m`;
+      if (age < 86_400_000) return `${Math.floor(age / 3_600_000)}h`;
+      return `${Math.floor(age / 86_400_000)}d`;
+    };
+    function showToast(message) {
+      const region = $('#toast-region');
+      region.innerHTML = `<div class="toast" role="status">${esc(message)}</div>`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { region.innerHTML = ''; }, 2600);
+    }
+    function formatDuration(milliseconds, compact = false) {
+      const seconds = Math.round(milliseconds / 1000);
+      if (seconds < 60) return `${Math.max(0, seconds)}s`;
+      const minutes = Math.round(milliseconds / 60_000);
+      if (minutes < 60) return `${minutes}m`;
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      if (hours < 24) return compact || !remainingMinutes ? `${hours}h` : `${hours}h ${remainingMinutes}m`;
+      const days = minutes / (24 * 60);
+      return `${days.toFixed(days < 10 ? 1 : 0)}d`;
+    }
+    function formatResponseDate(date, includeTime = false) {
+      return new Intl.DateTimeFormat('en', includeTime
+        ? { dateStyle: 'medium', timeStyle: 'short' }
+        : { month: 'short', day: 'numeric' }
+      ).format(date);
+    }
+    function firstStaffResponse(ticket) {
+      const createdAt = Date.parse(ticket.createdAt);
+      if (!Number.isFinite(createdAt)) return null;
+      const responseTimes = (ticket.messages || [])
+        .filter((message) => message.staff && !message.note)
+        .map((message) => Date.parse(message.createdAt))
+        .filter((timestamp) => Number.isFinite(timestamp));
+      const legacyResponseTimes = (ticket.activity || [])
+        .filter((entry) => entry && typeof entry === 'object' && /^Reply saved by /.test(entry.text || ''))
+        .map((entry) => Date.parse(entry.createdAt))
+        .filter((timestamp) => Number.isFinite(timestamp));
+      const respondedAt = responseTimes.concat(legacyResponseTimes)
+        .reduce((earliest, timestamp) => Math.min(earliest, timestamp), Infinity);
+      if (!Number.isFinite(respondedAt) || respondedAt < createdAt) return null;
+      return { ticket, respondedAt, duration: respondedAt - createdAt };
+    }
+    function renderResponseChart(responses, rangeDays) {
+      const now = Date.now();
+      const rangeStart = now - rangeDays * 24 * 60 * 60 * 1000;
+      const visibleResponses = responses
+        .filter(({ respondedAt }) => respondedAt >= rangeStart && respondedAt <= now)
+        .sort((left, right) => right.respondedAt - left.respondedAt);
+      const bucketCount = rangeDays === 7 ? 7 : rangeDays === 30 ? 10 : rangeDays === 90 ? 13 : 12;
+      const bucketDuration = (now - rangeStart) / bucketCount;
+      const buckets = Array.from({ length: bucketCount }, (_, index) => ({
+        start: rangeStart + index * bucketDuration,
+        end: Math.min(now, rangeStart + (index + 1) * bucketDuration),
+        responses: []
+      }));
+      for (const response of visibleResponses) {
+        const index = Math.min(bucketCount - 1, Math.floor((response.respondedAt - rangeStart) / bucketDuration));
+        buckets[index].responses.push(response);
+      }
+      const averages = buckets.map(({ responses: items }) => items.length
+        ? items.reduce((total, item) => total + item.duration, 0) / items.length
+        : null);
+      const chart = visibleResponses.length ? (() => {
+        const width = 760;
+        const height = 250;
+        const left = 62;
+        const right = 18;
+        const top = 15;
+        const bottom = 35;
+        const plotWidth = width - left - right;
+        const plotHeight = height - top - bottom;
+        const maxDuration = Math.max(60_000, ...averages.filter((value) => value !== null)) * 1.15;
+        const xFor = (index) => left + (bucketCount === 1 ? plotWidth / 2 : index / (bucketCount - 1) * plotWidth);
+        const yFor = (value) => top + plotHeight - value / maxDuration * plotHeight;
+        const grid = Array.from({ length: 5 }, (_, index) => {
+          const value = maxDuration * index / 4;
+          const y = yFor(value);
+          return `<line class="response-chart-grid" x1="${left}" y1="${y}" x2="${width - right}" y2="${y}"></line><text class="response-chart-axis" x="${left - 9}" y="${y + 3}" text-anchor="end">${esc(formatDuration(value, true))}</text>`;
+        }).join('');
+        const paths = [];
+        let currentPath = [];
+        averages.forEach((value, index) => {
+          if (value === null) {
+            if (currentPath.length) paths.push(currentPath);
+            currentPath = [];
+          } else currentPath.push(`${xFor(index)},${yFor(value)}`);
+        });
+        if (currentPath.length) paths.push(currentPath);
+        const lines = paths.filter((points) => points.length > 1)
+          .map((points) => `<polyline class="response-chart-line" points="${points.join(' ')}"></polyline>`).join('');
+        const points = averages.map((value, index) => {
+          if (value === null) return '';
+          const bucket = buckets[index];
+          const dateLabel = bucketDuration < 24 * 60 * 60 * 1000
+            ? formatResponseDate(new Date(bucket.start))
+            : `${formatResponseDate(new Date(bucket.start))} – ${formatResponseDate(new Date(bucket.end))}`;
+          const label = `${dateLabel}: ${formatDuration(value)} average first response, ${bucket.responses.length} ${bucket.responses.length === 1 ? 'ticket' : 'tickets'}`;
+          return `<circle class="response-chart-point" cx="${xFor(index)}" cy="${yFor(value)}" r="5"><title>${esc(label)}</title></circle>`;
+        }).join('');
+        const axisFormatter = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' });
+        const tickIndexes = [...new Set([0, Math.round((bucketCount - 1) / 3), Math.round((bucketCount - 1) * 2 / 3), bucketCount - 1])];
+        const axis = tickIndexes.map((index) => `<text class="response-chart-axis" x="${xFor(index)}" y="${height - 8}" text-anchor="${index === 0 ? 'start' : index === bucketCount - 1 ? 'end' : 'middle'}">${esc(axisFormatter.format(new Date(buckets[index].start)))}</text>`).join('');
+        return `<svg class="response-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Average time to first staff reply over the past ${rangeDays} days. Higher points mean slower responses."><title>First response time over the past ${rangeDays} days</title><desc>Each point shows the average first response time for tickets replied to during that date range. Higher values mean slower responses.</desc>${grid}${lines}${points}${axis}</svg>`;
+      })() : '<div class="response-chart-empty">No staff first responses in this period yet. Try a longer date range or check back after the team replies.</div>';
+      const recentRows = visibleResponses.slice(0, 5).map(({ ticket, respondedAt, duration }) => `<tr><td>${esc(formatResponseDate(new Date(respondedAt), true))}</td><td class="response-id">${esc(ticket.id)}</td><td>${esc(formatDuration(duration))}</td></tr>`).join('');
+      const records = visibleResponses.length
+        ? `<div class="response-records"><table><thead><tr><th scope="col">Response date</th><th scope="col">Ticket</th><th scope="col">Time to first reply</th></tr></thead><tbody>${recentRows}</tbody></table></div>`
+        : '';
+      return `<article class="page-card full response-card"><div class="response-card-header"><div><h2>Time to first staff response</h2><p>Measured from ticket creation to the first public staff reply. Higher means slower; lower means faster.</p></div><span class="response-count">${visibleResponses.length} ${visibleResponses.length === 1 ? 'first reply' : 'first replies'}</span></div>${chart}${records}</article>`;
+    }
+    function renderAnalytics() {
+      const now = Date.now();
+      const openCount = tickets.filter((ticket) => ticket.status === 'open').length;
+      const closedCount = tickets.length - openCount;
+      const responses = tickets.map(firstStaffResponse).filter(Boolean);
+      const rangeStart = now - analyticsRangeDays * 24 * 60 * 60 * 1000;
+      const periodResponses = responses.filter(({ respondedAt }) => respondedAt >= rangeStart && respondedAt <= now);
+      const averageResponse = periodResponses.length
+        ? periodResponses.reduce((total, response) => total + response.duration, 0) / periodResponses.length
+        : null;
+      const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+      const recentCount = tickets.filter((ticket) => Date.parse(ticket.createdAt) >= weekAgo).length;
+      const categories = ['General', 'Billing', 'Technical', 'Other'].map((category) => ({
+        category,
+        count: tickets.filter((ticket) => ticket.category === category).length
+      }));
+      const maxCategory = Math.max(1, ...categories.map(({ count }) => count));
+      return `<header class="page-heading analytics-heading"><div><div class="eyebrow">Support performance</div><h1>Analytics</h1><p>Live summaries from the tickets stored in your support inbox. This view updates whenever the inbox refreshes.</p></div><label class="analytics-range" for="analytics-range">Response date range<select id="analytics-range">${[[7, 'Last 7 days'], [30, 'Last 30 days'], [90, 'Last 90 days'], [180, 'Last 6 months'], [365, 'Last 12 months']].map(([days, label]) => `<option value="${days}" ${analyticsRangeDays === days ? 'selected' : ''}>${label}</option>`).join('')}</select></label></header>
+        <div class="page-grid">
+          <article class="page-card"><div class="metric-label">Total tickets</div><div class="metric-value">${tickets.length}</div><div class="metric-caption">All tickets in this workspace</div></article>
+          <article class="page-card"><div class="metric-label">Open tickets</div><div class="metric-value">${openCount}</div><div class="metric-caption">${closedCount} resolved</div></article>
+          <article class="page-card"><div class="metric-label">Average first response</div><div class="metric-value">${averageResponse === null ? '—' : esc(formatDuration(averageResponse))}</div><div class="metric-caption">${periodResponses.length} first replies in the selected period</div></article>
+          ${renderResponseChart(responses, analyticsRangeDays)}
+          <article class="page-card wide"><h2>Tickets by topic</h2>${categories.map(({ category, count }) => `<div class="chart-row"><span>${esc(category)}</span><span class="chart-track"><span class="chart-bar" style="display:block;width:${Math.round(count / maxCategory * 100)}%"></span></span><span class="chart-value">${count}</span></div>`).join('')}</article>
+          <article class="page-card"><h2>Last 7 days</h2><div class="metric-value">${recentCount}</div><div class="metric-caption">Tickets created in the past week</div></article>
+        </div>`;
+    }
+    function renderCommunity() {
+      const communityTickets = tickets
+        .filter((ticket) => ['General', 'Other'].includes(ticket.category))
+        .sort((left, right) => Date.parse(right.createdAt || 0) - Date.parse(left.createdAt || 0));
+      const rows = communityTickets.length ? communityTickets.map((ticket) => `<button class="community-item" type="button" data-open-ticket="${esc(ticket.id)}"><span class="avatar ${esc(ticket.avatar)}">${esc(ticket.initials)}</span><span class="community-item-copy"><span class="community-item-title"><span>${esc(ticket.subject)}</span><span class="ticket-time">${esc(relativeTime(ticket))}</span></span><span class="community-item-preview">${esc(ticket.preview)}</span><span class="community-item-meta"><span class="tag">${esc(ticket.category)}</span><span class="tag ${ticket.status === 'closed' ? 'closed' : ''}">${ticket.status === 'closed' ? 'Resolved' : 'Open'}</span></span></span></button>`).join('') : '<div class="empty-state"><div><strong>No community requests yet</strong>General and Other customer tickets will appear here.</div></div>';
+      return `<header class="page-heading"><div class="eyebrow">Customer conversations</div><h1>Community</h1><p>Browse customer requests submitted under General and Other. These conversations are private support tickets and are visible only to authenticated staff.</p></header><div class="community-list">${rows}</div>`;
+    }
+    function renderSettings() {
+      return `<header class="page-heading"><div class="eyebrow">Workspace preferences</div><h1>Settings</h1><p>Adjust how this inbox looks and how often it checks for new tickets. Preferences are saved in this browser.</p></header>
+        <form class="settings-form" id="settings-form">
+          <section class="settings-group"><h2>Inbox</h2><p>Choose how often to refresh ticket data and how much detail to show in the list.</p>
+            <label class="settings-row" for="refresh-interval"><span>Check for new tickets</span><select class="settings-control" id="refresh-interval"><option value="15">Every 15 seconds</option><option value="30">Every 30 seconds</option><option value="60">Every minute</option></select></label>
+            <label class="settings-row" for="compact-tickets"><span>Use compact ticket rows</span><input class="settings-checkbox" id="compact-tickets" type="checkbox"></label>
+          </section>
+          <button class="primary-button" type="submit">Save settings</button>
+        </form>`;
+    }
+    function renderPage() {
+      if (currentPage === 'analytics') pageView.innerHTML = renderAnalytics();
+      else if (currentPage === 'community') pageView.innerHTML = renderCommunity();
+      else if (currentPage === 'settings') {
+        pageView.innerHTML = renderSettings();
+        $('#refresh-interval').value = String(settings.refreshSeconds);
+        $('#compact-tickets').checked = settings.compactTickets;
+        $('#settings-form').addEventListener('submit', (event) => {
+          event.preventDefault();
+          settings.refreshSeconds = Number($('#refresh-interval').value);
+          settings.compactTickets = $('#compact-tickets').checked;
+          try {
+            localStorage.setItem('queue-support-settings', JSON.stringify(settings));
+          } catch (error) {
+            reportError(new Error(`Settings could not be saved in this browser: ${error.message}`));
+            return;
+          }
+          app.classList.toggle('compact-tickets', settings.compactTickets);
+          startTicketRefresh();
+          showToast('Settings saved');
+        });
+      }
+      if (currentPage === 'analytics') {
+        $('#analytics-range').addEventListener('change', (event) => {
+          analyticsRangeDays = Number(event.target.value);
+          renderPage();
+        });
+      }
+      pageView.querySelectorAll('[data-open-ticket]').forEach((button) => button.addEventListener('click', () => {
+        selectedId = button.dataset.openTicket;
+        currentPage = 'tickets';
+        app.dataset.page = currentPage;
+        document.querySelectorAll('.rail-button[data-page]').forEach((item) => item.classList.toggle('active', item.dataset.page === currentPage));
+        render();
+        app.classList.add('show-conversation');
+      }));
+    }
+    function startTicketRefresh() {
+      clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => loadTickets().catch(reportError), settings.refreshSeconds * 1000);
+    }
+    function visibleTickets() {
+      const query = $('#search-input').value.trim().toLowerCase();
+      return tickets.filter((ticket) => {
+        const matchesFilter = activeFilter === 'all' || (activeFilter === 'open' && ticket.status === 'open') || (activeFilter === 'mine' && ticket.assignee === 'Avery Morgan' && ticket.status === 'open') || (activeFilter === 'closed' && ticket.status === 'closed');
+        const matchesChannel = !selectedChannel || ticket.category === selectedChannel;
+        const matchesSearch = !query || [ticket.id, ticket.name, ticket.handle, ticket.subject, ticket.preview, ticket.category].join(' ').toLowerCase().includes(query);
+        return matchesFilter && matchesChannel && matchesSearch;
+      });
+    }
+    function renderList() {
+      const filtered = visibleTickets();
+      if (!filtered.some((ticket) => ticket.id === selectedId)) selectedId = filtered[0]?.id || null;
+      const emptyState = tickets.length
+        ? '<div class="empty-state"><div><strong>No tickets found</strong>Try changing your filters or search.</div></div>'
+        : '<div class="empty-state"><div><strong>No tickets yet</strong>New requests from customers will appear here. <a href="/">Open the support form</a>.</div></div>';
+      $('#ticket-list').innerHTML = filtered.length ? filtered.map((ticket) => `<button class="ticket-item ${ticket.id === selectedId ? 'active' : ''}" data-ticket="${esc(ticket.id)}" aria-label="${esc(ticket.subject)}, ${esc(ticket.name)}"><span class="avatar ${esc(ticket.avatar)}">${esc(ticket.initials)}</span><span class="ticket-copy"><span class="ticket-topline"><span class="ticket-person">${esc(ticket.name)}</span><span class="ticket-time">${relativeTime(ticket)}</span></span><span class="ticket-subject">${esc(ticket.subject)}</span><span class="ticket-preview">${esc(ticket.preview)}</span><span class="ticket-meta"><span class="tag ${categoryClass(ticket.category)}">${esc(ticket.category)}</span>${ticket.status === 'closed' ? '<span class="tag closed">Resolved</span>' : ''}${ticket.unread ? '<span class="unread-dot" title="Unread"></span>' : ''}</span></span></button>`).join('') : emptyState;
+      $('#all-count').textContent = tickets.length;
+      $('#open-count').textContent = tickets.filter((ticket) => ticket.status === 'open').length;
+      $('#mine-count').textContent = tickets.filter((ticket) => ticket.status === 'open' && ticket.assignee === 'Avery Morgan').length;
+      $('#closed-count').textContent = tickets.filter((ticket) => ticket.status === 'closed').length;
+      for (const category of ['General', 'Billing', 'Technical', 'Other']) {
+        $(`#${category.toLowerCase()}-count`).textContent = tickets.filter((ticket) => ticket.category === category).length;
+      }
+      $('#inbox-total').textContent = tickets.length;
+      $('#inbox-date').textContent = new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
+      $('#ticket-list').querySelectorAll('[data-ticket]').forEach((button) => button.addEventListener('click', () => {
+        selectedId = button.dataset.ticket;
+        const ticket = currentTicket();
+        ticket.unread = false;
+        render();
+        app.classList.add('show-conversation');
+        $('#message-stream').scrollTop = 0;
+        updateTicket(ticket, { unread: false }).catch(reportError);
+      }));
+    }
+    function renderConversation() {
+      const ticket = currentTicket();
+      if (!ticket) {
+        $('#conversation-header').innerHTML = '<span class="conversation-title">No ticket selected</span>';
+        $('#message-stream').innerHTML = '<div class="empty-state"><div><strong>Your inbox is clear</strong>Choose another filter to find a ticket.</div></div>';
+        $('#reply-form').hidden = true;
+        return;
+      }
+      $('#reply-form').hidden = false;
+      $('#conversation-header').innerHTML = `<div><h2 class="conversation-title">${esc(ticket.subject)}</h2><div class="conversation-subtitle">${esc(ticket.id)} <span style="padding:0 4px">·</span> opened ${esc(ticket.created)}</div></div><div class="header-actions"><button class="icon-button back-button" id="back-button" title="Back to tickets" aria-label="Back to tickets"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button class="icon-button" id="copy-link" title="Copy ticket ID" aria-label="Copy ticket ID"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="1.7"/></svg></button><button class="resolve-button ${ticket.status === 'closed' ? 'is-closed' : ''}" id="resolve-button">${ticket.status === 'closed' ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2.64-6.36M3 4v5h5m-1 3 3 3 7-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Reopen' : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Resolve'}</button></div>`;
+      const detailsToggle = document.createElement('button');
+      detailsToggle.className = 'details-toggle';
+      detailsToggle.type = 'button';
+      detailsToggle.textContent = app.classList.contains('show-details') ? 'Hide details' : 'Details';
+      detailsToggle.setAttribute('aria-expanded', String(app.classList.contains('show-details')));
+      detailsToggle.addEventListener('click', () => {
+        const isOpen = app.classList.toggle('show-details');
+        detailsToggle.textContent = isOpen ? 'Hide details' : 'Details';
+        detailsToggle.setAttribute('aria-expanded', String(isOpen));
+      });
+      $('#conversation-header').querySelector('.header-actions').insertBefore(detailsToggle, $('#resolve-button'));
+      $('#message-stream').innerHTML = `<div class="date-divider">${esc(ticket.created)}</div>${ticket.messages.map((message) => message.note ? `<div class="internal-note"><strong>Internal note · ${esc(message.time)}</strong>${esc(message.text)}</div>` : `<article class="message ${message.staff ? 'staff' : ''}">${initialsAvatar(message.initials, message.avatar)}<div class="message-body"><div class="message-heading"><span class="message-name">${esc(message.who)}</span><span class="message-time">${esc(message.time)}</span></div><div class="message-text">${esc(message.text)}</div></div></article>`).join('')}`;
+      $('#message-stream').scrollTop = $('#message-stream').scrollHeight;
+      $('#resolve-button').addEventListener('click', async () => {
+        const reopening = ticket.status === 'closed';
+        const resolutionReason = reopening ? undefined : window.prompt('Why are you resolving this ticket?');
+        if (!reopening && resolutionReason === null) return;
+        if (!reopening && !resolutionReason.trim()) {
+          showToast('Enter a reason before resolving this ticket');
+          return;
+        }
+        try {
+          await updateTicket(ticket, reopening
+            ? { status: 'open' }
+            : { status: 'closed', resolutionReason: resolutionReason.trim() });
+          showToast(reopening ? 'Ticket reopened' : 'Ticket resolved');
+        } catch (error) { reportError(error); }
+      });
+      $('#copy-link').addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(ticket.id); showToast(`${ticket.id} copied`); }
+        catch { showToast(`Ticket ID: ${ticket.id}`); }
+      });
+      $('#back-button').addEventListener('click', () => app.classList.remove('show-conversation'));
+      $('#customer-details').innerHTML = `<div class="customer-card">${initialsAvatar(ticket.initials, ticket.avatar)}<div><div class="customer-name">${esc(ticket.name)}</div><div class="customer-handle">${esc(ticket.email || ticket.handle)}</div></div></div><div class="customer-actions"><a class="small-action" href="mailto:${encodeURIComponent(ticket.email || '')}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16v14H4z" stroke="currentColor" stroke-width="1.8"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg> Email</a></div>`;
+      $('#customer-details').querySelectorAll('[data-customer-action]').forEach((button) => button.addEventListener('click', () => showToast(`${button.dataset.customerAction}: ${ticket.name}`)));
+      $('#assignee').value = ticket.assignee;
+      const labels = ticket.labels || [ticket.category, 'Customer'];
+      $('#label-list').innerHTML = labels.map((label) => `<span class="tag ${categoryClass(label)}">${esc(label)}</span>`).join('');
+      $('#ticket-metadata').innerHTML = `<span class="detail-label">Ticket info</span><div class="metadata-row"><span>Ticket ID</span><strong>${esc(ticket.id)}</strong></div><div class="metadata-row"><span>Channel</span><strong>#${esc(ticket.channel)}</strong></div><div class="metadata-row"><span>Created</span><strong>${esc(ticket.created)}</strong></div><div class="metadata-row"><span>Status</span><strong>${ticket.status === 'open' ? 'Open' : 'Resolved'}</strong></div>`;
+      $('#activity-list').innerHTML = ticket.activity.slice(0, 4).map((entry, index) => {
+        const text = typeof entry === 'string' ? entry : entry.text;
+        const time = typeof entry === 'string' ? (index === 0 ? 'Just now' : `${index * 12 + 3} min ago`) : new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(entry.createdAt));
+        return `<div class="activity-item"><span class="activity-dot"></span><span>${esc(text)}<span class="activity-time">${esc(time)}</span></span></div>`;
+      }).join('');
+    }
+    function render() {
+      renderList();
+      renderConversation();
+      if (currentPage !== 'tickets') renderPage();
+    }
+    document.querySelectorAll('.rail-button[data-page]').forEach((button) => button.addEventListener('click', () => {
+      currentPage = button.dataset.page;
+      app.dataset.page = currentPage;
+      app.classList.remove('show-conversation', 'show-details');
+      document.querySelectorAll('.rail-button[data-page]').forEach((item) => item.classList.toggle('active', item === button));
+      renderPage();
+    }));
+    document.querySelectorAll('[data-filter]').forEach((button) => button.addEventListener('click', () => {
+      activeFilter = button.dataset.filter;
+      selectedChannel = null;
+      document.querySelectorAll('[data-filter]').forEach((filter) => filter.classList.toggle('active', filter === button));
+      document.querySelectorAll('.nav-item').forEach((item) => item.classList.remove('selected'));
+      render();
+    }));
+    document.querySelectorAll('[data-view]').forEach((button) => button.addEventListener('click', () => {
+      activeFilter = button.dataset.view;
+      selectedChannel = null;
+      document.querySelectorAll('.nav-item').forEach((item) => item.classList.toggle('selected', item === button));
+      document.querySelectorAll('[data-filter]').forEach((filter) => filter.classList.toggle('active', filter.dataset.filter === (activeFilter === 'closed' ? 'all' : activeFilter)));
+      render();
+    }));
+    document.querySelectorAll('[data-channel]').forEach((button) => button.addEventListener('click', () => {
+      selectedChannel = button.dataset.channel;
+      activeFilter = 'all';
+      document.querySelectorAll('.nav-item').forEach((item) => item.classList.toggle('selected', item === button));
+      document.querySelectorAll('[data-filter]').forEach((filter) => filter.classList.remove('active'));
+      render();
+    }));
+    $('#search-input').addEventListener('input', renderList);
+    $('#close-details').addEventListener('click', () => app.classList.remove('show-details'));
+    $('#assignee').addEventListener('change', async (event) => {
+      const ticket = currentTicket();
+      if (!ticket) return;
+      try {
+        await updateTicket(ticket, { assignee: event.target.value });
+        showToast(`Assigned to ${ticket.assignee}`);
+      } catch (error) { reportError(error); }
+    });
+    $('#add-label').addEventListener('click', async () => {
+      const ticket = currentTicket();
+      if (!ticket) return;
+      const suggestedLabels = ['Priority', 'Follow-up', 'Feedback'];
+      ticket.labels ||= [ticket.category, 'Customer'];
+      const nextLabel = suggestedLabels.find((label) => !ticket.labels.includes(label));
+      if (!nextLabel) { showToast('No more suggested labels'); return; }
+      try {
+        await updateTicket(ticket, { addLabel: nextLabel });
+        showToast(`${nextLabel} label added`);
+      } catch (error) { reportError(error); }
+    });
+    $('#reply-mode').addEventListener('click', () => setReplyMode(false));
+    $('#note-mode').addEventListener('click', () => setReplyMode(true));
+    function setReplyMode(isNote) {
+      replyAsNote = isNote;
+      $('#reply-mode').classList.toggle('active', !isNote);
+      $('#note-mode').classList.toggle('active', isNote);
+      $('#reply-input').placeholder = isNote ? 'Add an internal note...' : 'Write a reply... (⌘ ↵ to send)';
+      $('.reply-hint').textContent = isNote ? 'Only your team can see internal notes' : 'Replies are saved here; email delivery is not configured.';
+      $('.send-button').innerHTML = isNote ? 'Add note <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : 'Save reply <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+    $('#reply-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const input = $('#reply-input');
+      const text = input.value.trim();
+      const ticket = currentTicket();
+      if (!text || !ticket) return;
+      try {
+        await updateTicket(ticket, replyAsNote ? { note: text } : { message: text });
+        input.value = '';
+        showToast(replyAsNote ? 'Internal note saved' : 'Reply saved to the ticket');
+      } catch (error) { reportError(error); }
+    });
+    $('#reply-input').addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') $('#reply-form').requestSubmit();
+    });
+    $('#notification-button').addEventListener('click', () => showToast('You’re all caught up'));
+    document.querySelectorAll('[data-toast]').forEach((button) => button.addEventListener('click', () => showToast(button.dataset.toast)));
+    document.addEventListener('keydown', (event) => {
+      if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) { event.preventDefault(); $('#search-input').focus(); }
+      if (event.key === 'Escape') { $('#search-input').blur(); app.classList.remove('show-conversation', 'show-details'); }
+    });
+    async function loadTickets() {
+      const previousId = selectedId;
+      const nextTickets = await api('/api/admin/tickets');
+      if (JSON.stringify(nextTickets) === JSON.stringify(tickets)) return;
+      tickets = nextTickets;
+      selectedId = tickets.some((ticket) => ticket.id === previousId) ? previousId : tickets[0]?.id || null;
+      render();
+    }
+    render();
+    loadTickets().catch(reportError);
+    app.classList.toggle('compact-tickets', settings.compactTickets);
+    startTicketRefresh();
+  </script>
+</body>
+</html>
