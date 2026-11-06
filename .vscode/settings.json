@@ -1,0 +1,16 @@
+{
+    "liveServer.settings.host": "0.0.0.0",
+    "liveServer.settings.port": 5500,
+    "liveServer.settings.NoBrowser": true,
+    "remote.autoForwardPorts": true,
+    "remote.portsAttributes": {
+        "5500": {
+            "label": "Website preview",
+            "onAutoForward": "openBrowser"
+        },
+        "5501": {
+            "label": "Queue support desk",
+            "onAutoForward": "openBrowser"
+        }
+    }
+}
